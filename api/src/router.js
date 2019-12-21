@@ -1,7 +1,8 @@
 import path from 'path'
-import {version} from '../../package.json'
+import { version } from '../../package.json'
 import _ from 'lodash'
 import File from './models/file'
+import { ObjectID } from 'mongodb';
 
 class AppRouter {
   constructor(app) {
@@ -36,9 +37,9 @@ class AppRouter {
         db.collection('files').insertMany(models, (err, result) => {
           if (err) {
             return res.status(503).json({
-                error: {
-                    message: "Db error during saving files.",
-                }
+              error: {
+                message: "Db error during saving files.",
+              }
             });
           }
           return res.json({
@@ -47,27 +48,30 @@ class AppRouter {
         });
       } else {
         return res.status(503).json({
-            error: {message: "File to upload is required!"}
+          error: {message: "File to upload is required!"}
         });
       }
     });
 
     // Download route
-    app.get('/api/download/:name', (req, res, next) => {
-      const fileName = req.params.name;
-      const filePath = path.join(uploadDir, fileName);
+    app.get('/api/download/:id', (req, res, next) => {
+      const fileId = req.params.id;
 
-      return res.download(filePath, fileName, (err) => {
-        if (err) {
-          return res.status(404).json({
+      db.collection('files').find({ _id: ObjectID(fileId) }).toArray((err, result) => {
+        const fileName = _.get(result, '[0].name');
+        const filePath = path.join(uploadDir, fileName);
+        return res.download(filePath, fileName, (err) => {
+          if (err) {
+            return res.status(404).json({
               error: {
-                  message: "File not found!"
+                message: "File not found!"
               }
-          });
-        } else {
-          console.log("File download complete");
-        }
-      });
+            });
+          } else {
+            console.log("File download complete");
+          }
+        });
+      })
     });
   }
 }

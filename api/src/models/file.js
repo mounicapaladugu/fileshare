@@ -23,7 +23,7 @@ class File {
 
   save(callback) {
     const db = this.app.get('db');
-    db.collection('fileshare').insertOne(this.model, (err, res) => {
+    db.collection('files').insertOne(this.model, (err, res) => {
       return callback(err, res);
     });
   }
